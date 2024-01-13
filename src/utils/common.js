@@ -20,6 +20,20 @@ export function generateOpenMap(width, height, obstacleFrequency) {
 	return map
 }
 
+export function placeEntityRandomly(section, map) {
+	let x, y
+	do {
+		x =
+			Math.floor(Math.random() * (section.endX - section.startX)) +
+			section.startX
+		y =
+			Math.floor(Math.random() * (section.endY - section.startY)) +
+			section.startY
+	} while (map[y][x] !== 0) // Ensure the tile is walkable
+
+	return { x, y }
+}
+
 export function endPlayerTurn(obj) {
 	constants.currentPlayerTurn = false
 	// Reset constants.remainingMoveDistance for the next turn
@@ -160,4 +174,24 @@ export function toTileCoordinates(pixelX, pixelY, tileSize, offset) {
 		x: Math.floor((pixelX - offset) / tileSize),
 		y: Math.floor((pixelY - offset) / tileSize),
 	}
+}
+
+export function checkGameEnd(playerPosition, enemies, finishPosition) {
+	// Check if the player is spotted by any enemy
+	for (const enemy of enemies) {
+		if (enemy.state === "alerted") {
+			console.log("Player spotted! Game over.")
+			return "lose"
+		}
+	}
+	// Check if the player reaches the finish tile
+	console.log("positions?", playerPosition.x, finishPosition.x)
+	if (
+		playerPosition.x === finishPosition.x &&
+		playerPosition.y === finishPosition.y
+	) {
+		console.log("Player reaches the finish! You win!")
+		return "win"
+	}
+	return "continue" // Game continues if none of the above conditions are met
 }

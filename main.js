@@ -8,16 +8,26 @@ import {
 	updatePathIndicator,
 	commitMove,
 	drawVisionConeTile,
+	placeEntityRandomly,
+	checkGameEnd,
 } from "./src/utils/common.js"
 import Enemy from "./src/utils/enemy.js"
 
-import { constants } from "./src/utils/constants.js"
+import {
+	constants,
+	centerPart,
+	upperLeftPart,
+	lowerRightEighth,
+} from "./src/utils/constants.js"
 
 export let mapData = []
 export let visibilityMap = []
 export let visionConeGraphics
 
 export let enemies = []
+
+let finishPosition
+let finishPositionPixel
 
 const config = {
 	type: Phaser.AUTO,
@@ -74,14 +84,38 @@ function create() {
 	// easystar.disableCornerCutting() // Optional, to prevent moving diagonally through walls
 
 	// Placeholder for player character
-	this.player = this.add.rectangle(20, 20, 30, 30, 0x00ff00)
-	// Placeholder for an enemy
+	let playerPlacement = placeEntityRandomly(lowerRightEighth, mapData)
+	this.player = this.add.rectangle(
+		playerPlacement.x * constants.tileSize + constants.tileSize / 2,
+		playerPlacement.y * constants.tileSize + constants.tileSize / 2,
+		30,
+		30,
+		0x00ff00
+	)
 
+	// Finish tile
+	finishPosition = placeEntityRandomly(upperLeftPart, mapData)
+	finishPositionPixel = {
+		x: finishPosition.x * constants.tileSize + constants.tileSize / 2,
+		y: finishPosition.y * constants.tileSize + constants.tileSize / 2,
+	}
+	this.finishTile = this.add.rectangle(
+		finishPositionPixel.x,
+		finishPositionPixel.y,
+		30,
+		30,
+		0x0000ff
+	)
+
+	// ENEMIES
 	for (let i = 0; i < 3; i++) {
 		// Create a Phaser rectangle sprite for each enemy
+		let enemyPlacement = placeEntityRandomly(centerPart, mapData)
+		console.log("enemyPlacement", enemyPlacement)
 		let enemySprite = this.add.rectangle(
-			20 + 80 * (i + 1) * 3,
-			20 + 120 * (i + 2),
+			enemyPlacement.x * constants.tileSize + constants.tileSize / 2,
+			enemyPlacement.y * constants.tileSize + constants.tileSize / 2,
+
 			30,
 			30,
 			0xff0000
@@ -152,5 +186,11 @@ function update() {
 		enemies.forEach((enemy) => enemy.update(this.player))
 
 		endAiTurn()
+	}
+	let gameStatus = checkGameEnd(this.player, enemies, finishPositionPixel)
+	if (gameStatus === "win" || gameStatus === "lose") {
+		this.scene.pause()
+		let gameOverText = gameStatus === "win" ? "You Win!" : "You Lose!"
+		this.add.text(300, 260, gameOverText, { fill: "#fff", fontSize: "32px" })
 	}
 }
